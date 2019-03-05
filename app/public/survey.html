@@ -5,12 +5,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link type="text/css" rel="stylesheet" href="../../node_modules/@fortawesome/fontawesome-free/css/all.min.css">
-    <link type="text/css" rel="stylesheet" href="../../node_modules/bootstrap/dist/css/bootstrap.min.css">
+
     <title>Frinder</title>
 </head>
 
 <body>
+
+    <div class="modal fade" id="myModal" tabindex="0" role="dialog" aria-labelledby="exampleModalCenterTitle"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <img class="img-fluid" id="modalImg" src="" alt="Your new friend">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <main class="container">
 
@@ -319,13 +338,22 @@
 
 </body>
 
-<script src="../../node_modules/jquery/dist/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+    integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+    crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+    crossorigin="anonymous"></script>
+<link type="text/css" rel="stylesheet" href="../../node_modules/@fortawesome/fontawesome-free/css/all.min.css">
+<link type="text/css" rel="stylesheet" href="../../node_modules/bootstrap/dist/css/bootstrap.min.css">
+
 <script>
 
     $("#submit-btn").on("click", function () {
 
-        let form = $("form").serializeArray();
         event.preventDefault();
+        let form = $("form").serializeArray();
         let newFriend = {
             "name": form[0].value,
             "photo": form[1].value,
@@ -342,9 +370,57 @@
                 parseInt(form[11].value)
             ]
         }
-        console.log(newFriend)
+        $.ajax("/api/friends", {
+            type: "POST",
+            data: newFriend
+        }).then(() => {
+            console.log(`New friend Added`)
+        })
 
+        $.ajax("/api/friends", {
+            type: "GET"
+        }).then((data) => {
+            let z = data.map((e) => {
+                return {
+                    name: e.name,
+                    photo: e.photo,
+                    scores: e.scores.reduce((a, b) => {
+                        return parseInt(a) + parseInt(b);
+                    })
+                }
+            })
+
+            z.sort((a, b) => {
+                return a.scores - b.scores;
+            });
+
+            z.forEach((e) => {
+
+                if (e.name == newFriend.name) {
+
+                    let x = z.indexOf(e);
+
+                    if (x == 0) {
+                        let yourFriend = z[x + 1];
+                        $("#modalTitle").html(`${yourFriend.name}`)
+                        $("#modalImg").attr("src", `${yourFriend.photo}`)
+                        $("#myModal").modal('show');
+                        console.log(z[x + 1])
+                    }
+                    else {
+                        let yourFriend = z[x - 1];
+                        $("#modalTitle").html(`${yourFriend.name}`)
+                        $("#modalImg").attr("src", `${yourFriend.photo}`)
+                        $("#myModal").modal('show');
+                    }
+
+                }
+
+            });
+
+        })
     })
+
 </script>
 
 </html>
